@@ -52,7 +52,7 @@ registry = "git://mirrors.ustc.edu.cn/crates.io-index"
 
 > 由于打包后的exe过大，故使用了upx加壳，release中的app.exe 是原版的应用，不放心的师傅可以放在虚拟机中运行，因考虑到免杀性需求，部分代码暂未开源。
 
-+ 首次运行后会在当前目录下生成`history.json`文件用于保存历史记录，`bundle`和`static`目录下放置的是默认的捆绑文件与图标，**<font style="color:#DF2A3F;">删除后会影响默认配置的生成</font>****，**当前支持三种加载方式，点击生成后会默认在当前目录下生成对应的木马和需要分离加载的`beacon`。
++ 首次运行后会在当前目录下生成`history.json`文件用于保存历史记录，`bundle`和`static`目录下放置的是默认的捆绑文件与图标，删除后会影响默认配置的生成，当前支持三种加载方式，点击生成后会默认在当前目录下生成对应的木马和需要分离加载的`beacon`。
 + bundle和static目录下放的是内置一些文件，更改后会默认选项的生成，也可以从本地自行选择文件进行加载，点击生成后会保存历史记录到`history.jso`文件，下次打开时可直接选用相应选项。
 + console选项开启后，beacon运行时会开启cmd窗口。
 + tools目录下，`MSBbuild.exe`是内置的微软签名文件，`rcedit.exe`用于添加文件信息，`sigthief.exe`是打包好的`sigthief.py`文件，`SharpIncrease.exe`可用于某些情况下膨胀文件体积用于bypassqvm，删除或更换名称也会影响内置选项。
