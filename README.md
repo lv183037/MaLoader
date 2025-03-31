@@ -3,6 +3,55 @@
 
 ![](https://cdn.nlark.com/yuque/0/2024/png/26100191/1733738887760-70747763-716f-4105-ad96-b2397deb500a.png)
 
+
+
+
+
+## 更新记录
+> 2025.03.30 版本V1.1
+
+## 优化内容
+1. 优化了历史记录的保存方式
+2. exe的文件大小
+
+
+## 新增内容
+1. 新增ollvm编译选项
+2. 新增生成文件的创建时间调整
+3. 新增生成DLL白+黑的功能
+4. 新增日志中心和一些实用工具
+
+## 新增功能使用说明
+
+### DLL劫持
+> 仅用于生成dll劫持上线的木马，使用前请先了解DLL劫持上线的相关知识
+1. 前提
+   - exe调用的dll中的导出函数名称
+2. 使用说明
+   - 有效载荷：选择cs生成的stageless格式的bin文件
+   - 加载方式：本地/远程，远程需要填入访问即可下载文件的地址，例如：https://abc.com/123，并且选择存在DLL劫持的DLL文件。
+3. 中转配置
+   - 中转代理：需要转发的DLL路径，即原本未被劫持的DLL路径，填写绝对路径，黑DLL会把原本的函数，转发到这个路径进行函数调用，所以这里需要填写上线机器的白DLL路径。
+   - 转发函数：即exe调用的DLL中的导出函数名称
+   - 配置选项：劫持主线程【当exe不会持续运行时，需要劫持主线程进行运行】。
+4. 使用说明
+   - 例如`python39.exe`和`python39.dll` `python39.exe`会自动调用`python39.dll`中名为`Py_Main`的函数，
+    ![alt text](image.png)
+    点击生成后会在程序运行目录生成对应加密后的beacon和dll文件
+    ![alt text](image-1.png)
+    将黑dll+白程序+加密后的beacon放到同一目录下，运行exe即可上线，如果遇到运行存在dos框的exe可以使用实用工具中的去除黑框进行去除。
+    ![alt text](image-2.png)
+
+
+### Ollvm
+1. 使用此功能需要使用特定版本的 toolchain `nightly-2024-06-26-x86_64-pc-windows-msvc`
+2. 安装方法
+   - rustup install nightly-2024-06-26-x86_64-pc-windows-msvc
+   - rustup default nightly-2024-06-26-x86_64-pc-windows-msvc
+
+
+
+
 ## 项目地址
 ```plain
 https://github.com/lv183037/MaLoader
