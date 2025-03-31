@@ -1,0 +1,73 @@
+use std::arch::asm;
+use std::io::prelude::*;
+use std::{fs, process};
+
+const DLL_NAME: &str = r"{DLL_NAME}";
+const LOG_NAME: &str = r"{LOG_PATH}";
+
+static mut ADDRESSES: [usize;{NUM_FUNCTIONS}] = [0;{NUM_FUNCTIONS}];
+
+fn terminate_process() {
+    process::exit(-1);
+}
+
+fn gateway(index: i32) -> usize 
+{
+    
+    let func_name = get_function_name(index);
+    let mut file = fs::OpenOptions::new().create(true).append(true).open(LOG_NAME).unwrap();
+
+    if func_name.is_empty() 
+    {
+        file.write_all(b"[x] Error ocurred, empty function name detected.").unwrap();
+        return (terminate_process as *const()) as usize;
+    }
+
+
+    unsafe
+    {
+        if ADDRESSES[index as usize] != 0
+        {
+            file.write_all(func_name.as_bytes()).unwrap();
+            file.write_all(b"\n").unwrap();
+            return ADDRESSES[index as usize];
+        }
+    }
+
+    let mut file = fs::OpenOptions::new().create(true).append(true).open(LOG_NAME).unwrap();
+    file.write_all(func_name.as_bytes()).unwrap();
+    file.write_all(b"\n").unwrap();
+
+    let dll_address = dinvoke_rs::dinvoke::load_library_a(DLL_NAME);
+    if dll_address == 0 
+    {
+        let error_message = format!("[x] Error trying to load the dll {}.", DLL_NAME);
+        file.write_all(error_message.as_bytes()).unwrap();
+        return (terminate_process as *const()) as usize;
+    }
+
+    let mut func_address = dinvoke_rs::dinvoke::get_function_address(dll_address, &func_name);
+    if func_address == 0 && func_name.contains("OrdinalPlaceholder") 
+    {
+        let ordinal = func_name.replace("OrdinalPlaceholder", "");
+        let ordinal: u32 = ordinal.parse().unwrap();
+        func_address = dinvoke_rs::dinvoke::get_function_address_by_ordinal(dll_address, ordinal);
+    }
+
+    if func_address == 0 
+    {
+        let error_message = format!("[x] Error trying to locate the function {}.", func_name);
+        file.write_all(error_message.as_bytes()).unwrap();
+        return (terminate_process as *const()) as usize;
+    }
+
+    unsafe {
+        ADDRESSES[index as usize] = func_address;
+    }
+
+    file.write_all(func_name.as_bytes()).unwrap();
+    file.write_all(b"\n").unwrap();
+
+    func_address
+}
+

